@@ -423,19 +423,6 @@ export default function HealthPage() {
     return options;
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 py-4 sm:py-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-            <p className="text-sm text-slate-500">Menghitung kesehatan keuangan...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 space-y-4 sm:space-y-6">
       {/* HEADER */}
