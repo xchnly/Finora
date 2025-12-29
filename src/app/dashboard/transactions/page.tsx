@@ -16,14 +16,14 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  Filter, 
-  Search, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Filter,
+  Search,
+  TrendingUp,
+  TrendingDown,
   Download,
   Calendar,
   Wallet,
@@ -41,9 +41,9 @@ import {
   ArrowRightLeft,
   ArrowUpRight,
   ArrowDownRight,
-  Loader2
+  Loader2,
 } from "lucide-react";
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
 type Wallet = {
   id: string;
@@ -97,16 +97,19 @@ export default function TransactionsPage() {
   const [formattedAmount, setFormattedAmount] = useState("");
   const [walletId, setWalletId] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [note, setNote] = useState("");
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   // Transfer form state
   const [fromWalletId, setFromWalletId] = useState("");
   const [toWalletId, setToWalletId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [formattedTransferAmount, setFormattedTransferAmount] = useState("");
-  const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
+  const [transferDate, setTransferDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [transferNote, setTransferNote] = useState("");
   const [transferFee, setTransferFee] = useState("");
   const [formattedTransferFee, setFormattedTransferFee] = useState("");
@@ -117,8 +120,10 @@ export default function TransactionsPage() {
   const [filterWallet, setFilterWallet] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .split("T")[0],
+    end: new Date().toISOString().split("T")[0],
   });
 
   // Pagination
@@ -130,38 +135,36 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (!user) return;
 
-    return onSnapshot(
-      collection(db, "users", user.uid, "wallets"),
-      (snap) => {
-        const walletsData = snap.docs.map((d) => ({
-          id: d.id,
-          name: d.data().name || "",
-          balance: d.data().balance || 0,
-          color: d.data().color || "#3b82f6",
-          type: d.data().type || "cash",
-          accountNumber: d.data().accountNumber || null,
-          description: d.data().description || null,
-          createdAt: d.data().createdAt || serverTimestamp(),
-        })) as Wallet[];
-        
-        setWallets(walletsData);
-        
-        // Set default wallet if none selected
-        if (!walletId && walletsData.length > 0) {
-          const defaultWallet = walletsData.find(w => w.type === "cash") || walletsData[0];
-          setWalletId(defaultWallet.id);
-        }
-        
-        // Set default transfer wallets
-        if (walletsData.length >= 2) {
-          setFromWalletId(walletsData[0].id);
-          setToWalletId(walletsData[1].id);
-        } else if (walletsData.length === 1) {
-          setFromWalletId(walletsData[0].id);
-          setToWalletId(walletsData[0].id);
-        }
+    return onSnapshot(collection(db, "users", user.uid, "wallets"), (snap) => {
+      const walletsData = snap.docs.map((d) => ({
+        id: d.id,
+        name: d.data().name || "",
+        balance: d.data().balance || 0,
+        color: d.data().color || "#3b82f6",
+        type: d.data().type || "cash",
+        accountNumber: d.data().accountNumber || null,
+        description: d.data().description || null,
+        createdAt: d.data().createdAt || serverTimestamp(),
+      })) as Wallet[];
+
+      setWallets(walletsData);
+
+      // Set default wallet if none selected
+      if (!walletId && walletsData.length > 0) {
+        const defaultWallet =
+          walletsData.find((w) => w.type === "cash") || walletsData[0];
+        setWalletId(defaultWallet.id);
       }
-    );
+
+      // Set default transfer wallets
+      if (walletsData.length >= 2) {
+        setFromWalletId(walletsData[0].id);
+        setToWalletId(walletsData[1].id);
+      } else if (walletsData.length === 1) {
+        setFromWalletId(walletsData[0].id);
+        setToWalletId(walletsData[0].id);
+      }
+    });
   }, [user]);
 
   // 🔥 LOAD CATEGORIES
@@ -181,12 +184,13 @@ export default function TransactionsPage() {
           description: d.data().description || null,
           createdAt: d.data().createdAt || serverTimestamp(),
         })) as Category[];
-        
+
         setCategories(categoriesData);
-        
+
         // Set default category if none selected
         if (!categoryId && categoriesData.length > 0) {
-          const defaultCategory = categoriesData.find(c => c.type === type) || categoriesData[0];
+          const defaultCategory =
+            categoriesData.find((c) => c.type === type) || categoriesData[0];
           setCategoryId(defaultCategory.id);
         }
       }
@@ -199,7 +203,7 @@ export default function TransactionsPage() {
 
     const ref = collection(db, "users", user.uid, "transactions");
     const q = query(ref, orderBy("date", "desc"));
-    
+
     return onSnapshot(q, (snap) => {
       const data: Transaction[] = snap.docs.map((d) => ({
         id: d.id,
@@ -211,11 +215,17 @@ export default function TransactionsPage() {
   }, [user]);
 
   // Format currency input
-  const formatCurrency = (value: string, setFormatted: (val: string) => void, setRaw: (val: string) => void) => {
-    const numericValue = value.replace(/\D/g, '');
-    
+  const formatCurrency = (
+    value: string,
+    setFormatted: (val: string) => void,
+    setRaw: (val: string) => void
+  ) => {
+    const numericValue = value.replace(/\D/g, "");
+
     if (numericValue) {
-      const formatted = new Intl.NumberFormat('id-ID').format(parseInt(numericValue));
+      const formatted = new Intl.NumberFormat("id-ID").format(
+        parseInt(numericValue)
+      );
       setFormatted(formatted);
       setRaw(numericValue);
     } else {
@@ -226,16 +236,20 @@ export default function TransactionsPage() {
 
   // Parse formatted amount back to number
   const parseFormattedAmount = (formatted: string) => {
-    return parseInt(formatted.replace(/\./g, '')) || 0;
+    return parseInt(formatted.replace(/\./g, "")) || 0;
   };
 
   // Get wallet icon based on type
   const getWalletIcon = (type: string) => {
-    switch(type) {
-      case "cash": return <Banknote size={16} />;
-      case "bank": return <Landmark size={16} />;
-      case "digital": return <CreditCard size={16} />;
-      default: return <Wallet size={16} />;
+    switch (type) {
+      case "cash":
+        return <Banknote size={16} />;
+      case "bank":
+        return <Landmark size={16} />;
+      case "digital":
+        return <CreditCard size={16} />;
+      default:
+        return <Wallet size={16} />;
     }
   };
 
@@ -245,20 +259,21 @@ export default function TransactionsPage() {
 
     // Filter by type
     if (filterType !== "all") {
-      filtered = filtered.filter(tx => tx.type === filterType);
+      filtered = filtered.filter((tx) => tx.type === filterType);
     }
 
     // Filter by wallet
     if (filterWallet !== "all") {
-      filtered = filtered.filter(tx => 
-        tx.walletId === filterWallet || 
-        (tx.type === "transfer" && tx.transferToWalletId === filterWallet)
+      filtered = filtered.filter(
+        (tx) =>
+          tx.walletId === filterWallet ||
+          (tx.type === "transfer" && tx.transferToWalletId === filterWallet)
       );
     }
 
     // Filter by category
     if (filterCategory !== "all") {
-      filtered = filtered.filter(tx => tx.categoryId === filterCategory);
+      filtered = filtered.filter((tx) => tx.categoryId === filterCategory);
     }
 
     // Filter by date range
@@ -267,7 +282,7 @@ export default function TransactionsPage() {
       const endDate = new Date(dateRange.end);
       endDate.setHours(23, 59, 59, 999);
 
-      filtered = filtered.filter(tx => {
+      filtered = filtered.filter((tx) => {
         const txDate = tx.date.toDate();
         return txDate >= startDate && txDate <= endDate;
       });
@@ -276,52 +291,67 @@ export default function TransactionsPage() {
     // Filter by search query
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(tx => {
-        const wallet = wallets.find(w => w.id === tx.walletId);
-        const category = categories.find(c => c.id === tx.categoryId);
-        const toWallet = tx.type === "transfer" 
-          ? wallets.find(w => w.id === tx.transferToWalletId)
-          : null;
-        
+      filtered = filtered.filter((tx) => {
+        const wallet = wallets.find((w) => w.id === tx.walletId);
+        const category = categories.find((c) => c.id === tx.categoryId);
+        const toWallet =
+          tx.type === "transfer"
+            ? wallets.find((w) => w.id === tx.transferToWalletId)
+            : null;
+
         return (
           tx.note?.toLowerCase().includes(query) ||
           wallet?.name.toLowerCase().includes(query) ||
           category?.name.toLowerCase().includes(query) ||
-          (toWallet?.name.toLowerCase().includes(query) || false)
+          toWallet?.name.toLowerCase().includes(query) ||
+          false
         );
       });
     }
 
     return filtered;
-  }, [transactions, filterType, filterWallet, filterCategory, dateRange, searchQuery, wallets, categories]);
+  }, [
+    transactions,
+    filterType,
+    filterWallet,
+    filterCategory,
+    dateRange,
+    searchQuery,
+    wallets,
+    categories,
+  ]);
 
   // Calculate totals
-  const { totalIncome, totalExpense, netBalance, totalTransfer } = useMemo(() => {
-    const income = filteredTransactions
-      .filter(tx => tx.type === "income")
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    
-    const expense = filteredTransactions
-      .filter(tx => tx.type === "expense")
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    
-    const transfer = filteredTransactions
-      .filter(tx => tx.type === "transfer")
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    
-    return {
-      totalIncome: income,
-      totalExpense: expense,
-      netBalance: income - expense,
-      totalTransfer: transfer
-    };
-  }, [filteredTransactions]);
+  const { totalIncome, totalExpense, netBalance, totalTransfer } =
+    useMemo(() => {
+      const income = filteredTransactions
+        .filter((tx) => tx.type === "income")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      const expense = filteredTransactions
+        .filter((tx) => tx.type === "expense")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      const transfer = filteredTransactions
+        .filter((tx) => tx.type === "transfer")
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      return {
+        totalIncome: income,
+        totalExpense: expense,
+        netBalance: income - expense,
+        totalTransfer: transfer,
+      };
+    }, [filteredTransactions]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+  const currentTransactions = filteredTransactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   // ➕ CREATE TRANSACTION
   const handleAdd = async () => {
@@ -331,40 +361,39 @@ export default function TransactionsPage() {
     }
 
     try {
-      const txAmount = parseFormattedAmount(formattedAmount) || parseInt(amount);
-      
-      await addDoc(
-        collection(db, "users", user!.uid, "transactions"),
-        {
-          type,
-          amount: txAmount,
-          walletId,
-          categoryId,
-          date: Timestamp.fromDate(new Date(date)),
-          note: note.trim() || null,
-          createdAt: serverTimestamp(),
-        }
-      );
+      const txAmount =
+        parseFormattedAmount(formattedAmount) || parseInt(amount);
+
+      await addDoc(collection(db, "users", user!.uid, "transactions"), {
+        type,
+        amount: txAmount,
+        walletId,
+        categoryId,
+        date: Timestamp.fromDate(new Date(date)),
+        note: note.trim() || null,
+        createdAt: serverTimestamp(),
+      });
 
       // Update wallet balance
       const walletRef = doc(db, "users", user!.uid, "wallets", walletId);
-      const wallet = wallets.find(w => w.id === walletId);
+      const wallet = wallets.find((w) => w.id === walletId);
       if (wallet) {
-        const newBalance = type === "income" 
-          ? wallet.balance + txAmount
-          : wallet.balance - txAmount;
-        
+        const newBalance =
+          type === "income"
+            ? wallet.balance + txAmount
+            : wallet.balance - txAmount;
+
         await updateDoc(walletRef, {
-          balance: newBalance
+          balance: newBalance,
         });
       }
 
       // Update category transaction count
       const categoryRef = doc(db, "users", user!.uid, "categories", categoryId);
-      const category = categories.find(c => c.id === categoryId);
+      const category = categories.find((c) => c.id === categoryId);
       if (category) {
         await updateDoc(categoryRef, {
-          transactionCount: category.transactionCount + 1
+          transactionCount: category.transactionCount + 1,
         });
       }
 
@@ -389,16 +418,19 @@ export default function TransactionsPage() {
       return;
     }
 
-    const fromWallet = wallets.find(w => w.id === fromWalletId);
-    const toWallet = wallets.find(w => w.id === toWalletId);
-    
+    const fromWallet = wallets.find((w) => w.id === fromWalletId);
+    const toWallet = wallets.find((w) => w.id === toWalletId);
+
     if (!fromWallet || !toWallet) {
       toast.error("Dompet tidak ditemukan");
       return;
     }
 
-    const transferAmountNum = parseFormattedAmount(formattedTransferAmount) || parseInt(transferAmount);
-    const feeAmount = transferFee ? parseFormattedAmount(formattedTransferFee) || parseInt(transferFee) : 0;
+    const transferAmountNum =
+      parseFormattedAmount(formattedTransferAmount) || parseInt(transferAmount);
+    const feeAmount = transferFee
+      ? parseFormattedAmount(formattedTransferFee) || parseInt(transferFee)
+      : 0;
 
     if (transferAmountNum <= 0) {
       toast.error("Jumlah transfer harus lebih dari 0");
@@ -406,7 +438,11 @@ export default function TransactionsPage() {
     }
 
     if (fromWallet.balance < transferAmountNum + feeAmount) {
-      toast.error(`Saldo dompet asal tidak mencukupi. Saldo tersedia: Rp ${fromWallet.balance.toLocaleString('id-ID')}`);
+      toast.error(
+        `Saldo dompet asal tidak mencukupi. Saldo tersedia: Rp ${fromWallet.balance.toLocaleString(
+          "id-ID"
+        )}`
+      );
       return;
     }
 
@@ -414,7 +450,9 @@ export default function TransactionsPage() {
 
     try {
       // Cari atau buat kategori transfer
-      const transferCategory = categories.find(c => c.name.toLowerCase() === "transfer");
+      const transferCategory = categories.find(
+        (c) => c.name.toLowerCase() === "transfer"
+      );
       let transferCategoryId = transferCategory?.id;
 
       if (!transferCategory) {
@@ -435,38 +473,49 @@ export default function TransactionsPage() {
       }
 
       // Buat transaksi transfer
-      await addDoc(
-        collection(db, "users", user!.uid, "transactions"),
-        {
-          type: "transfer",
-          amount: transferAmountNum,
-          walletId: fromWalletId,
-          categoryId: transferCategoryId,
-          transferToWalletId: toWalletId,
-          transferFee: feeAmount > 0 ? feeAmount : null,
-          date: Timestamp.fromDate(new Date(transferDate)),
-          note: transferNote.trim() || `Transfer dari ${fromWallet.name} ke ${toWallet.name}`,
-          createdAt: serverTimestamp(),
-        }
-      );
+      await addDoc(collection(db, "users", user!.uid, "transactions"), {
+        type: "transfer",
+        amount: transferAmountNum,
+        walletId: fromWalletId,
+        categoryId: transferCategoryId,
+        transferToWalletId: toWalletId,
+        transferFee: feeAmount > 0 ? feeAmount : null,
+        date: Timestamp.fromDate(new Date(transferDate)),
+        note:
+          transferNote.trim() ||
+          `Transfer dari ${fromWallet.name} ke ${toWallet.name}`,
+        createdAt: serverTimestamp(),
+      });
 
       // Update saldo dompet asal (dikurangi jumlah transfer + biaya)
-      const fromWalletRef = doc(db, "users", user!.uid, "wallets", fromWalletId);
+      const fromWalletRef = doc(
+        db,
+        "users",
+        user!.uid,
+        "wallets",
+        fromWalletId
+      );
       await updateDoc(fromWalletRef, {
-        balance: fromWallet.balance - transferAmountNum - feeAmount
+        balance: fromWallet.balance - transferAmountNum - feeAmount,
       });
 
       // Update saldo dompet tujuan (ditambah jumlah transfer)
       const toWalletRef = doc(db, "users", user!.uid, "wallets", toWalletId);
       await updateDoc(toWalletRef, {
-        balance: toWallet.balance + transferAmountNum
+        balance: toWallet.balance + transferAmountNum,
       });
 
       // Update transaction count kategori transfer
       if (transferCategoryId && transferCategory) {
-        const categoryRef = doc(db, "users", user!.uid, "categories", transferCategoryId);
+        const categoryRef = doc(
+          db,
+          "users",
+          user!.uid,
+          "categories",
+          transferCategoryId
+        );
         await updateDoc(categoryRef, {
-          transactionCount: (transferCategory.transactionCount || 0) + 1
+          transactionCount: (transferCategory.transactionCount || 0) + 1,
         });
       }
 
@@ -489,30 +538,84 @@ export default function TransactionsPage() {
     }
 
     try {
-      const txAmount = parseFormattedAmount(formattedAmount) || parseInt(amount);
-      
-      // Revert old transaction impact on wallet balance
-      const oldWallet = wallets.find(w => w.id === editingTransaction.walletId);
-      if (oldWallet && editingTransaction.type !== "transfer") {
-        const oldWalletRef = doc(db, "users", user!.uid, "wallets", editingTransaction.walletId);
-        const oldBalanceChange = editingTransaction.type === "income" 
-          ? -editingTransaction.amount 
-          : editingTransaction.amount;
-        
-        await updateDoc(oldWalletRef, {
-          balance: oldWallet.balance + oldBalanceChange
-        });
-      }
+      const txAmount =
+        parseFormattedAmount(formattedAmount) || parseInt(amount);
 
-      // Apply new transaction to selected wallet
-      const newWallet = wallets.find(w => w.id === walletId);
-      if (newWallet && editingTransaction.type !== "transfer") {
-        const newWalletRef = doc(db, "users", user!.uid, "wallets", walletId);
-        const newBalanceChange = type === "income" ? txAmount : -txAmount;
-        
-        await updateDoc(newWalletRef, {
-          balance: newWallet.balance + newBalanceChange
-        });
+      // Case 1: Wallet tidak berubah (hanya update jumlah/tanggal/kategori)
+      if (editingTransaction.walletId === walletId) {
+        const wallet = wallets.find((w) => w.id === walletId);
+        if (wallet && editingTransaction.type === type) {
+          // Tipe transaksi sama (misal: expense ke expense)
+          const walletRef = doc(db, "users", user!.uid, "wallets", walletId);
+          const balanceChange = txAmount - editingTransaction.amount; // Selisih jumlah
+          const finalBalance =
+            type === "income"
+              ? wallet.balance + balanceChange
+              : wallet.balance - balanceChange;
+
+          await updateDoc(walletRef, {
+            balance: finalBalance,
+          });
+        } else if (wallet && editingTransaction.type !== type) {
+          // Tipe transaksi berubah (misal: expense menjadi income)
+          const walletRef = doc(db, "users", user!.uid, "wallets", walletId);
+
+          // Kembalikan saldo dari transaksi lama
+          const revertAmount =
+            editingTransaction.type === "income"
+              ? -editingTransaction.amount // Kurangi karena sebelumnya income
+              : editingTransaction.amount; // Tambah karena sebelumnya expense
+
+          // Terapkan transaksi baru
+          const applyAmount =
+            type === "income"
+              ? txAmount // Tambah karena income baru
+              : -txAmount; // Kurangi karena expense baru
+
+          const finalBalance = wallet.balance + revertAmount + applyAmount;
+
+          await updateDoc(walletRef, {
+            balance: finalBalance,
+          });
+        }
+      }
+      // Case 2: Wallet berubah (pindah ke wallet lain)
+      else {
+        // Revert dari wallet lama
+        const oldWallet = wallets.find(
+          (w) => w.id === editingTransaction.walletId
+        );
+        if (oldWallet) {
+          const oldWalletRef = doc(
+            db,
+            "users",
+            user!.uid,
+            "wallets",
+            editingTransaction.walletId
+          );
+          const oldRevertAmount =
+            editingTransaction.type === "income"
+              ? -editingTransaction.amount // Kurangi dari wallet lama karena sebelumnya income
+              : editingTransaction.amount; // Tambah ke wallet lama karena sebelumnya expense
+
+          await updateDoc(oldWalletRef, {
+            balance: oldWallet.balance + oldRevertAmount,
+          });
+        }
+
+        // Apply ke wallet baru
+        const newWallet = wallets.find((w) => w.id === walletId);
+        if (newWallet) {
+          const newWalletRef = doc(db, "users", user!.uid, "wallets", walletId);
+          const newApplyAmount =
+            type === "income"
+              ? txAmount // Tambah ke wallet baru karena income
+              : -txAmount; // Kurangi dari wallet baru karena expense
+
+          await updateDoc(newWalletRef, {
+            balance: newWallet.balance + newApplyAmount,
+          });
+        }
       }
 
       // Update transaction
@@ -544,45 +647,73 @@ export default function TransactionsPage() {
     try {
       // Update wallet balance based on transaction type
       if (transaction.type === "income" || transaction.type === "expense") {
-        const wallet = wallets.find(w => w.id === transaction.walletId);
+        const wallet = wallets.find((w) => w.id === transaction.walletId);
         if (wallet) {
-          const walletRef = doc(db, "users", user!.uid, "wallets", transaction.walletId);
-          const balanceChange = transaction.type === "income" 
-            ? -transaction.amount 
-            : transaction.amount;
-          
+          const walletRef = doc(
+            db,
+            "users",
+            user!.uid,
+            "wallets",
+            transaction.walletId
+          );
+          const balanceChange =
+            transaction.type === "income"
+              ? -transaction.amount
+              : transaction.amount;
+
           await updateDoc(walletRef, {
-            balance: wallet.balance + balanceChange
+            balance: wallet.balance + balanceChange,
           });
         }
       } else if (transaction.type === "transfer") {
         // For transfer, revert both wallets
-        const fromWallet = wallets.find(w => w.id === transaction.walletId);
-        const toWallet = transaction.transferToWalletId 
-          ? wallets.find(w => w.id === transaction.transferToWalletId)
+        const fromWallet = wallets.find((w) => w.id === transaction.walletId);
+        const toWallet = transaction.transferToWalletId
+          ? wallets.find((w) => w.id === transaction.transferToWalletId)
           : null;
 
         if (fromWallet) {
-          const fromWalletRef = doc(db, "users", user!.uid, "wallets", transaction.walletId);
+          const fromWalletRef = doc(
+            db,
+            "users",
+            user!.uid,
+            "wallets",
+            transaction.walletId
+          );
           await updateDoc(fromWalletRef, {
-            balance: fromWallet.balance + transaction.amount + (transaction.transferFee || 0)
+            balance:
+              fromWallet.balance +
+              transaction.amount +
+              (transaction.transferFee || 0),
           });
         }
 
         if (toWallet) {
-          const toWalletRef = doc(db, "users", user!.uid, "wallets", transaction.transferToWalletId!);
+          const toWalletRef = doc(
+            db,
+            "users",
+            user!.uid,
+            "wallets",
+            transaction.transferToWalletId!
+          );
           await updateDoc(toWalletRef, {
-            balance: toWallet.balance - transaction.amount
+            balance: toWallet.balance - transaction.amount,
           });
         }
       }
 
       // Update category transaction count
-      const category = categories.find(c => c.id === transaction.categoryId);
+      const category = categories.find((c) => c.id === transaction.categoryId);
       if (category) {
-        const categoryRef = doc(db, "users", user!.uid, "categories", transaction.categoryId);
+        const categoryRef = doc(
+          db,
+          "users",
+          user!.uid,
+          "categories",
+          transaction.categoryId
+        );
         await updateDoc(categoryRef, {
-          transactionCount: Math.max(0, category.transactionCount - 1)
+          transactionCount: Math.max(0, category.transactionCount - 1),
         });
       }
 
@@ -599,17 +730,19 @@ export default function TransactionsPage() {
   // Setup form for editing
   const setupEditForm = (transaction: Transaction) => {
     if (transaction.type === "transfer") {
-      toast.error("Transaksi transfer tidak dapat diedit. Silakan hapus dan buat transfer baru.");
+      toast.error(
+        "Transaksi transfer tidak dapat diedit. Silakan hapus dan buat transfer baru."
+      );
       return;
     }
-    
+
     setEditingTransaction(transaction);
     setType(transaction.type);
     setAmount(transaction.amount.toString());
-    setFormattedAmount(transaction.amount.toLocaleString('id-ID'));
+    setFormattedAmount(transaction.amount.toLocaleString("id-ID"));
     setWalletId(transaction.walletId);
     setCategoryId(transaction.categoryId);
-    setDate(transaction.date.toDate().toISOString().split('T')[0]);
+    setDate(transaction.date.toDate().toISOString().split("T")[0]);
     setNote(transaction.note || "");
     setOpenForm(true);
   };
@@ -619,9 +752,15 @@ export default function TransactionsPage() {
     setType("expense");
     setAmount("");
     setFormattedAmount("");
-    setWalletId(wallets.find(w => w.type === "cash")?.id || wallets[0]?.id || "");
-    setCategoryId(categories.find(c => c.type === "expense")?.id || categories[0]?.id || "");
-    setDate(new Date().toISOString().split('T')[0]);
+    setWalletId(
+      wallets.find((w) => w.type === "cash")?.id || wallets[0]?.id || ""
+    );
+    setCategoryId(
+      categories.find((c) => c.type === "expense")?.id ||
+        categories[0]?.id ||
+        ""
+    );
+    setDate(new Date().toISOString().split("T")[0]);
     setNote("");
     setEditingTransaction(null);
   };
@@ -637,7 +776,7 @@ export default function TransactionsPage() {
     }
     setTransferAmount("");
     setFormattedTransferAmount("");
-    setTransferDate(new Date().toISOString().split('T')[0]);
+    setTransferDate(new Date().toISOString().split("T")[0]);
     setTransferNote("");
     setTransferFee("");
     setFormattedTransferFee("");
@@ -645,51 +784,77 @@ export default function TransactionsPage() {
 
   // Export to Excel
   const handleExportExcel = () => {
-    const worksheetData = filteredTransactions.map(tx => {
-      const wallet = wallets.find(w => w.id === tx.walletId);
-      const category = categories.find(c => c.id === tx.categoryId);
-      const toWallet = tx.type === "transfer" 
-        ? wallets.find(w => w.id === tx.transferToWalletId)
-        : null;
-      
+    const worksheetData = filteredTransactions.map((tx) => {
+      const wallet = wallets.find((w) => w.id === tx.walletId);
+      const category = categories.find((c) => c.id === tx.categoryId);
+      const toWallet =
+        tx.type === "transfer"
+          ? wallets.find((w) => w.id === tx.transferToWalletId)
+          : null;
+
       return {
-        Tanggal: tx.date.toDate().toLocaleDateString('id-ID'),
-        Waktu: tx.date.toDate().toLocaleTimeString('id-ID'),
-        Tipe: tx.type === 'income' ? 'Pemasukan' : tx.type === 'expense' ? 'Pengeluaran' : 'Transfer',
+        Tanggal: tx.date.toDate().toLocaleDateString("id-ID"),
+        Waktu: tx.date.toDate().toLocaleTimeString("id-ID"),
+        Tipe:
+          tx.type === "income"
+            ? "Pemasukan"
+            : tx.type === "expense"
+            ? "Pengeluaran"
+            : "Transfer",
         Jumlah: tx.amount,
-        FormatJumlah: `${tx.type === 'expense' ? '-' : ''}Rp ${tx.amount.toLocaleString('id-ID')}`,
-        Wallet: wallet?.name || '-',
-        TipeWallet: wallet?.type === 'cash' ? 'Tunai' : wallet?.type === 'bank' ? 'Bank' : 'Digital',
+        FormatJumlah: `${
+          tx.type === "expense" ? "-" : ""
+        }Rp ${tx.amount.toLocaleString("id-ID")}`,
+        Wallet: wallet?.name || "-",
+        TipeWallet:
+          wallet?.type === "cash"
+            ? "Tunai"
+            : wallet?.type === "bank"
+            ? "Bank"
+            : "Digital",
         SaldoWallet: wallet?.balance || 0,
-        TransferKe: tx.type === 'transfer' ? toWallet?.name || '-' : '-',
+        TransferKe: tx.type === "transfer" ? toWallet?.name || "-" : "-",
         BiayaTransfer: tx.transferFee || 0,
-        Kategori: category?.name || '-',
-        IconKategori: category?.icon || '💰',
-        Catatan: tx.note || '',
-        Dibuat: tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleDateString('id-ID') : '-'
+        Kategori: category?.name || "-",
+        IconKategori: category?.icon || "💰",
+        Catatan: tx.note || "",
+        Dibuat: tx.createdAt?.toDate
+          ? tx.createdAt.toDate().toLocaleDateString("id-ID")
+          : "-",
       };
     });
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transaksi");
-    
+
     // Auto-size columns
     const colWidths = [
-      { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 15 }, 
-      { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 15 }, 
-      { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 8 }, 
-      { wch: 30 }, { wch: 12 }
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 8 },
+      { wch: 30 },
+      { wch: 12 },
     ];
-    worksheet['!cols'] = colWidths;
-    
-    XLSX.writeFile(workbook, `transaksi-${new Date().toISOString().split('T')[0]}.xlsx`);
+    worksheet["!cols"] = colWidths;
+
+    XLSX.writeFile(
+      workbook,
+      `transaksi-${new Date().toISOString().split("T")[0]}.xlsx`
+    );
     toast.success("Data berhasil diekspor ke Excel");
   };
 
-  const filteredCategories = categories.filter(
-    (c) => c.type === type
-  );
+  const filteredCategories = categories.filter((c) => c.type === type);
 
   return (
     <div className="max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 space-y-4 sm:space-y-6">
@@ -709,8 +874,14 @@ export default function TransactionsPage() {
             onClick={() => setShowBalance(!showBalance)}
             className="flex items-center gap-1 sm:gap-2 rounded-lg border border-blue-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
           >
-            {showBalance ? <EyeOff size={14} className="sm:w-4 sm:h-4" /> : <Eye size={14} className="sm:w-4 sm:h-4" />}
-            <span className="hidden sm:inline">{showBalance ? "Sembunyikan" : "Tampilkan"}</span>
+            {showBalance ? (
+              <EyeOff size={14} className="sm:w-4 sm:h-4" />
+            ) : (
+              <Eye size={14} className="sm:w-4 sm:h-4" />
+            )}
+            <span className="hidden sm:inline">
+              {showBalance ? "Sembunyikan" : "Tampilkan"}
+            </span>
             <span className="sm:hidden">{showBalance ? "Tutup" : "Buka"}</span>
           </button>
           <button
@@ -745,54 +916,73 @@ export default function TransactionsPage() {
         <div className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium opacity-90">Total Income</p>
+              <p className="text-xs sm:text-sm font-medium opacity-90">
+                Total Income
+              </p>
               <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold">
-                {showBalance ? `Rp ${totalIncome.toLocaleString("id-ID")}` : "******"}
+                {showBalance
+                  ? `Rp ${totalIncome.toLocaleString("id-ID")}`
+                  : "******"}
               </p>
             </div>
             <TrendingUp className="h-8 w-8 sm:h-10 sm:w-10 opacity-80" />
           </div>
           <p className="mt-2 sm:mt-3 text-xs sm:text-sm opacity-90">
-            {filteredTransactions.filter(t => t.type === 'income').length} transaksi
+            {filteredTransactions.filter((t) => t.type === "income").length}{" "}
+            transaksi
           </p>
         </div>
 
         <div className="rounded-xl bg-gradient-to-r from-red-500 to-pink-600 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium opacity-90">Total Expense</p>
+              <p className="text-xs sm:text-sm font-medium opacity-90">
+                Total Expense
+              </p>
               <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold">
-                {showBalance ? `Rp ${totalExpense.toLocaleString("id-ID")}` : "******"}
+                {showBalance
+                  ? `Rp ${totalExpense.toLocaleString("id-ID")}`
+                  : "******"}
               </p>
             </div>
             <TrendingDown className="h-8 w-8 sm:h-10 sm:w-10 opacity-80" />
           </div>
           <p className="mt-2 sm:mt-3 text-xs sm:text-sm opacity-90">
-            {filteredTransactions.filter(t => t.type === 'expense').length} transaksi
+            {filteredTransactions.filter((t) => t.type === "expense").length}{" "}
+            transaksi
           </p>
         </div>
 
         <div className="rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium opacity-90">Total Transfer</p>
+              <p className="text-xs sm:text-sm font-medium opacity-90">
+                Total Transfer
+              </p>
               <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold">
-                {showBalance ? `Rp ${totalTransfer.toLocaleString("id-ID")}` : "******"}
+                {showBalance
+                  ? `Rp ${totalTransfer.toLocaleString("id-ID")}`
+                  : "******"}
               </p>
             </div>
             <ArrowRightLeft className="h-8 w-8 sm:h-10 sm:w-10 opacity-80" />
           </div>
           <p className="mt-2 sm:mt-3 text-xs sm:text-sm opacity-90">
-            {filteredTransactions.filter(t => t.type === 'transfer').length} transaksi
+            {filteredTransactions.filter((t) => t.type === "transfer").length}{" "}
+            transaksi
           </p>
         </div>
 
         <div className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 p-4 sm:p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm font-medium opacity-90">Net Balance</p>
+              <p className="text-xs sm:text-sm font-medium opacity-90">
+                Net Balance
+              </p>
               <p className="mt-1 sm:mt-2 text-xl sm:text-2xl md:text-3xl font-bold">
-                {showBalance ? `Rp ${netBalance.toLocaleString("id-ID")}` : "******"}
+                {showBalance
+                  ? `Rp ${netBalance.toLocaleString("id-ID")}`
+                  : "******"}
               </p>
             </div>
             <DollarSign className="h-8 w-8 sm:h-10 sm:w-10 opacity-80" />
@@ -837,7 +1027,9 @@ export default function TransactionsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Wallet</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Wallet
+              </label>
               <select
                 className="w-full rounded-lg border border-blue-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 value={filterWallet}
@@ -846,14 +1038,18 @@ export default function TransactionsPage() {
                 <option value="all">Semua Wallet</option>
                 {wallets.map((w) => (
                   <option key={w.id} value={w.id}>
-                    {w.name} (Rp {showBalance ? w.balance.toLocaleString('id-ID') : '******'})
+                    {w.name} (Rp{" "}
+                    {showBalance ? w.balance.toLocaleString("id-ID") : "******"}
+                    )
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Kategori</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Kategori
+              </label>
               <select
                 className="w-full rounded-lg border border-blue-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 value={filterCategory}
@@ -870,21 +1066,29 @@ export default function TransactionsPage() {
 
             <div className="sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Dari Tanggal</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Dari Tanggal
+                </label>
                 <input
                   type="date"
                   className="w-full rounded-lg border border-blue-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, start: e.target.value }))
+                  }
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Sampai Tanggal</label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">
+                  Sampai Tanggal
+                </label>
                 <input
                   type="date"
                   className="w-full rounded-lg border border-blue-200 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({ ...prev, end: e.target.value }))
+                  }
                 />
               </div>
             </div>
@@ -906,8 +1110,18 @@ export default function TransactionsPage() {
               }}
               className="rounded-lg p-1 hover:bg-slate-100"
             >
-              <svg className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -928,15 +1142,24 @@ export default function TransactionsPage() {
                   {wallets.map((w) => (
                     <option key={w.id} value={w.id}>
                       <div className="flex items-center gap-2">
-                        <span style={{ color: w.color }}>{getWalletIcon(w.type)}</span>
-                        {w.name} (Rp {showBalance ? w.balance.toLocaleString('id-ID') : '******'})
+                        <span style={{ color: w.color }}>
+                          {getWalletIcon(w.type)}
+                        </span>
+                        {w.name} (Rp{" "}
+                        {showBalance
+                          ? w.balance.toLocaleString("id-ID")
+                          : "******"}
+                        )
                       </div>
                     </option>
                   ))}
                 </select>
                 {fromWalletId && (
                   <p className="mt-1 text-xs text-slate-500">
-                    Saldo tersedia: Rp {wallets.find(w => w.id === fromWalletId)?.balance.toLocaleString('id-ID') || '0'}
+                    Saldo tersedia: Rp{" "}
+                    {wallets
+                      .find((w) => w.id === fromWalletId)
+                      ?.balance.toLocaleString("id-ID") || "0"}
                   </p>
                 )}
               </div>
@@ -952,14 +1175,22 @@ export default function TransactionsPage() {
                   onChange={(e) => setToWalletId(e.target.value)}
                 >
                   <option value="">Pilih Dompet Tujuan</option>
-                  {wallets.filter(w => w.id !== fromWalletId).map((w) => (
-                    <option key={w.id} value={w.id}>
-                      <div className="flex items-center gap-2">
-                        <span style={{ color: w.color }}>{getWalletIcon(w.type)}</span>
-                        {w.name} (Rp {showBalance ? w.balance.toLocaleString('id-ID') : '******'})
-                      </div>
-                    </option>
-                  ))}
+                  {wallets
+                    .filter((w) => w.id !== fromWalletId)
+                    .map((w) => (
+                      <option key={w.id} value={w.id}>
+                        <div className="flex items-center gap-2">
+                          <span style={{ color: w.color }}>
+                            {getWalletIcon(w.type)}
+                          </span>
+                          {w.name} (Rp{" "}
+                          {showBalance
+                            ? w.balance.toLocaleString("id-ID")
+                            : "******"}
+                          )
+                        </div>
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -992,7 +1223,13 @@ export default function TransactionsPage() {
                     placeholder="0"
                     className="w-full rounded-lg border border-purple-200 bg-white py-1.5 sm:py-2 pl-10 sm:pl-12 pr-3 sm:pr-4 text-xs sm:text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                     value={formattedTransferAmount}
-                    onChange={(e) => formatCurrency(e.target.value, setFormattedTransferAmount, setTransferAmount)}
+                    onChange={(e) =>
+                      formatCurrency(
+                        e.target.value,
+                        setFormattedTransferAmount,
+                        setTransferAmount
+                      )
+                    }
                     inputMode="numeric"
                   />
                 </div>
@@ -1012,7 +1249,13 @@ export default function TransactionsPage() {
                     placeholder="0"
                     className="w-full rounded-lg border border-purple-200 bg-white py-1.5 sm:py-2 pl-10 sm:pl-12 pr-3 sm:pr-4 text-xs sm:text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                     value={formattedTransferFee}
-                    onChange={(e) => formatCurrency(e.target.value, setFormattedTransferFee, setTransferFee)}
+                    onChange={(e) =>
+                      formatCurrency(
+                        e.target.value,
+                        setFormattedTransferFee,
+                        setTransferFee
+                      )
+                    }
                     inputMode="numeric"
                   />
                 </div>
@@ -1039,32 +1282,56 @@ export default function TransactionsPage() {
 
           {fromWalletId && toWalletId && fromWalletId !== toWalletId && (
             <div className="mt-3 sm:mt-4 p-3 bg-purple-50 rounded-lg">
-              <p className="text-xs sm:text-sm font-medium text-purple-800 mb-1">Ringkasan Transfer:</p>
+              <p className="text-xs sm:text-sm font-medium text-purple-800 mb-1">
+                Ringkasan Transfer:
+              </p>
               <div className="text-xs sm:text-sm text-slate-700 space-y-1">
                 <p className="flex items-center gap-2">
                   <span className="font-medium">Dari:</span>
                   <span className="inline-flex items-center gap-1">
-                    <div 
-                      className="h-2 w-2 rounded-full" 
-                      style={{ backgroundColor: wallets.find(w => w.id === fromWalletId)?.color || '#8b5cf6' }}
+                    <div
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        backgroundColor:
+                          wallets.find((w) => w.id === fromWalletId)?.color ||
+                          "#8b5cf6",
+                      }}
                     />
-                    {wallets.find(w => w.id === fromWalletId)?.name}
+                    {wallets.find((w) => w.id === fromWalletId)?.name}
                   </span>
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="font-medium">Ke:</span>
                   <span className="inline-flex items-center gap-1">
-                    <div 
-                      className="h-2 w-2 rounded-full" 
-                      style={{ backgroundColor: wallets.find(w => w.id === toWalletId)?.color || '#8b5cf6' }}
+                    <div
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        backgroundColor:
+                          wallets.find((w) => w.id === toWalletId)?.color ||
+                          "#8b5cf6",
+                      }}
                     />
-                    {wallets.find(w => w.id === toWalletId)?.name}
+                    {wallets.find((w) => w.id === toWalletId)?.name}
                   </span>
                 </p>
-                <p>• Jumlah Transfer: <span className="font-medium">Rp {formattedTransferAmount || '0'}</span></p>
-                <p>• Biaya Transfer: <span className="font-medium">Rp {formattedTransferFee || '0'}</span></p>
+                <p>
+                  • Jumlah Transfer:{" "}
+                  <span className="font-medium">
+                    Rp {formattedTransferAmount || "0"}
+                  </span>
+                </p>
+                <p>
+                  • Biaya Transfer:{" "}
+                  <span className="font-medium">
+                    Rp {formattedTransferFee || "0"}
+                  </span>
+                </p>
                 <p className="font-medium pt-2 border-t border-purple-100">
-                  • Total yang dikurangi dari dompet asal: Rp {(parseFormattedAmount(formattedTransferAmount) + parseFormattedAmount(formattedTransferFee)).toLocaleString('id-ID')}
+                  • Total yang dikurangi dari dompet asal: Rp{" "}
+                  {(
+                    parseFormattedAmount(formattedTransferAmount) +
+                    parseFormattedAmount(formattedTransferFee)
+                  ).toLocaleString("id-ID")}
                 </p>
               </div>
             </div>
@@ -1115,8 +1382,18 @@ export default function TransactionsPage() {
               }}
               className="rounded-lg p-1 hover:bg-slate-100"
             >
-              <svg className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5 text-slate-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -1170,13 +1447,17 @@ export default function TransactionsPage() {
                     placeholder="0"
                     className="w-full rounded-lg border border-blue-200 bg-white py-1.5 sm:py-2 pl-10 sm:pl-12 pr-3 sm:pr-4 text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     value={formattedAmount}
-                    onChange={(e) => formatCurrency(e.target.value, setFormattedAmount, setAmount)}
+                    onChange={(e) =>
+                      formatCurrency(
+                        e.target.value,
+                        setFormattedAmount,
+                        setAmount
+                      )
+                    }
                     inputMode="numeric"
                   />
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  Format: 1.000.000
-                </p>
+                <p className="mt-1 text-xs text-slate-500">Format: 1.000.000</p>
               </div>
 
               <div>
@@ -1208,8 +1489,14 @@ export default function TransactionsPage() {
                   {wallets.map((w) => (
                     <option key={w.id} value={w.id}>
                       <div className="flex items-center gap-2">
-                        <span style={{ color: w.color }}>{getWalletIcon(w.type)}</span>
-                        {w.name} (Rp {showBalance ? w.balance.toLocaleString('id-ID') : '******'})
+                        <span style={{ color: w.color }}>
+                          {getWalletIcon(w.type)}
+                        </span>
+                        {w.name} (Rp{" "}
+                        {showBalance
+                          ? w.balance.toLocaleString("id-ID")
+                          : "******"}
+                        )
                       </div>
                     </option>
                   ))}
@@ -1279,10 +1566,13 @@ export default function TransactionsPage() {
           </h3>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
             <p className="text-xs sm:text-sm text-slate-600">
-              Ditampilkan {currentTransactions.length} dari {filteredTransactions.length} transaksi
+              Ditampilkan {currentTransactions.length} dari{" "}
+              {filteredTransactions.length} transaksi
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm text-slate-600">Per halaman:</span>
+              <span className="text-xs sm:text-sm text-slate-600">
+                Per halaman:
+              </span>
               <select
                 className="rounded-lg border border-blue-200 bg-white px-1.5 sm:px-2 py-1 text-xs sm:text-sm"
                 value={itemsPerPage}
@@ -1303,7 +1593,10 @@ export default function TransactionsPage() {
         {loading ? (
           <div className="space-y-2 sm:space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-blue-100 bg-white p-3 sm:p-5 animate-pulse">
+              <div
+                key={i}
+                className="rounded-xl border border-blue-100 bg-white p-3 sm:p-5 animate-pulse"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-slate-200" />
@@ -1323,12 +1616,18 @@ export default function TransactionsPage() {
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
             <h4 className="mb-1 sm:mb-2 text-base sm:text-lg font-semibold text-slate-800">
-              {searchQuery || filterType !== "all" || filterWallet !== "all" || filterCategory !== "all" 
-                ? "Transaksi tidak ditemukan" 
+              {searchQuery ||
+              filterType !== "all" ||
+              filterWallet !== "all" ||
+              filterCategory !== "all"
+                ? "Transaksi tidak ditemukan"
                 : "Belum ada transaksi"}
             </h4>
             <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-              {searchQuery || filterType !== "all" || filterWallet !== "all" || filterCategory !== "all"
+              {searchQuery ||
+              filterType !== "all" ||
+              filterWallet !== "all" ||
+              filterCategory !== "all"
                 ? "Coba ubah filter atau kata kunci pencarian"
                 : "Mulai dengan menambahkan transaksi pertama kamu untuk melacak keuangan"}
             </p>
@@ -1387,12 +1686,15 @@ export default function TransactionsPage() {
                   </thead>
                   <tbody className="divide-y divide-blue-50">
                     {currentTransactions.map((tx) => {
-                      const wallet = wallets.find(w => w.id === tx.walletId);
-                      const category = categories.find(c => c.id === tx.categoryId);
-                      const toWallet = tx.type === "transfer" 
-                        ? wallets.find(w => w.id === tx.transferToWalletId)
-                        : null;
-                      
+                      const wallet = wallets.find((w) => w.id === tx.walletId);
+                      const category = categories.find(
+                        (c) => c.id === tx.categoryId
+                      );
+                      const toWallet =
+                        tx.type === "transfer"
+                          ? wallets.find((w) => w.id === tx.transferToWalletId)
+                          : null;
+
                       return (
                         <tr
                           key={tx.id}
@@ -1402,62 +1704,78 @@ export default function TransactionsPage() {
                             <div className="flex flex-col">
                               <span className="font-medium text-slate-800">
                                 {tx.date.toDate().toLocaleDateString("id-ID", {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric'
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
                                 })}
                               </span>
                               <span className="text-xs text-slate-500">
                                 {tx.date.toDate().toLocaleTimeString("id-ID", {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
+                                  hour: "2-digit",
+                                  minute: "2-digit",
                                 })}
                               </span>
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-2 sm:py-3">
-                            <span className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
-                              tx.type === 'income' 
-                                ? 'bg-emerald-100 text-emerald-700' 
-                                : tx.type === 'expense'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-purple-100 text-purple-700'
-                            }`}>
-                              {tx.type === 'income' ? (
+                            <span
+                              className={`inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
+                                tx.type === "income"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : tx.type === "expense"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
+                            >
+                              {tx.type === "income" ? (
                                 <>
                                   <TrendingUp size={10} />
-                                  <span className="hidden sm:inline">Income</span>
+                                  <span className="hidden sm:inline">
+                                    Income
+                                  </span>
                                   <span className="sm:hidden">In</span>
                                 </>
-                              ) : tx.type === 'expense' ? (
+                              ) : tx.type === "expense" ? (
                                 <>
                                   <TrendingDown size={10} />
-                                  <span className="hidden sm:inline">Expense</span>
+                                  <span className="hidden sm:inline">
+                                    Expense
+                                  </span>
                                   <span className="sm:hidden">Ex</span>
                                 </>
                               ) : (
                                 <>
                                   <ArrowRightLeft size={10} />
-                                  <span className="hidden sm:inline">Transfer</span>
+                                  <span className="hidden sm:inline">
+                                    Transfer
+                                  </span>
                                   <span className="sm:hidden">Trf</span>
                                 </>
                               )}
                             </span>
                           </td>
                           <td className="px-2 sm:px-4 py-2 sm:py-3">
-                            <div className={`font-semibold ${
-                              tx.type === 'income' ? 'text-emerald-600' : 
-                              tx.type === 'expense' ? 'text-red-600' : 
-                              'text-purple-600'
-                            }`}>
+                            <div
+                              className={`font-semibold ${
+                                tx.type === "income"
+                                  ? "text-emerald-600"
+                                  : tx.type === "expense"
+                                  ? "text-red-600"
+                                  : "text-purple-600"
+                              }`}
+                            >
                               {showBalance ? (
                                 <>
-                                  {tx.type === 'expense' && '-'}Rp {tx.amount.toLocaleString("id-ID")}
-                                  {tx.type === 'transfer' && tx.transferFee && tx.transferFee > 0 && (
-                                    <div className="text-xs text-slate-500">
-                                      + fee: Rp {tx.transferFee.toLocaleString("id-ID")}
-                                    </div>
-                                  )}
+                                  {tx.type === "expense" && "-"}Rp{" "}
+                                  {tx.amount.toLocaleString("id-ID")}
+                                  {tx.type === "transfer" &&
+                                    tx.transferFee &&
+                                    tx.transferFee > 0 && (
+                                      <div className="text-xs text-slate-500">
+                                        + fee: Rp{" "}
+                                        {tx.transferFee.toLocaleString("id-ID")}
+                                      </div>
+                                    )}
                                 </>
                               ) : (
                                 "******"
@@ -1469,34 +1787,48 @@ export default function TransactionsPage() {
                               <div className="space-y-1">
                                 <div className="flex items-center gap-1">
                                   <div className="h-2 w-2 rounded-full bg-red-400" />
-                                  <span className="text-xs text-slate-600">Dari:</span>
-                                  <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{wallet?.name || "-"}</span>
+                                  <span className="text-xs text-slate-600">
+                                    Dari:
+                                  </span>
+                                  <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">
+                                    {wallet?.name || "-"}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <div className="h-2 w-2 rounded-full bg-green-400" />
-                                  <span className="text-xs text-slate-600">Ke:</span>
-                                  <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">{toWallet?.name || "-"}</span>
+                                  <span className="text-xs text-slate-600">
+                                    Ke:
+                                  </span>
+                                  <span className="text-xs font-medium truncate max-w-[80px] sm:max-w-none">
+                                    {toWallet?.name || "-"}
+                                  </span>
                                 </div>
                               </div>
                             ) : (
                               <div className="flex items-center gap-1 sm:gap-2">
-                                <div 
+                                <div
                                   className="h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full flex-shrink-0"
-                                  style={{ backgroundColor: wallet?.color || '#3b82f6' }}
+                                  style={{
+                                    backgroundColor: wallet?.color || "#3b82f6",
+                                  }}
                                 />
-                                <span className="font-medium text-slate-800 truncate max-w-[100px] sm:max-w-none">{wallet?.name || "-"}</span>
+                                <span className="font-medium text-slate-800 truncate max-w-[100px] sm:max-w-none">
+                                  {wallet?.name || "-"}
+                                </span>
                               </div>
                             )}
                           </td>
                           <td className="px-2 sm:px-4 py-2 sm:py-3">
                             <div className="flex items-center gap-1 sm:gap-2">
-                              <span 
+                              <span
                                 className="text-sm sm:text-lg flex-shrink-0"
-                                style={{ color: category?.color || '#6b7280' }}
+                                style={{ color: category?.color || "#6b7280" }}
                               >
-                                {category?.icon || '💰'}
+                                {category?.icon || "💰"}
                               </span>
-                              <span className="truncate max-w-[80px] sm:max-w-none">{category?.name || "-"}</span>
+                              <span className="truncate max-w-[80px] sm:max-w-none">
+                                {category?.name || "-"}
+                              </span>
                             </div>
                           </td>
                           <td className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3">
@@ -1512,7 +1844,10 @@ export default function TransactionsPage() {
                                   className="rounded-lg p-1 sm:p-1.5 hover:bg-blue-50 text-blue-600 transition-colors"
                                   title="Edit transaksi"
                                 >
-                                  <Edit2 size={12} className="sm:w-3.5 sm:h-3.5" />
+                                  <Edit2
+                                    size={12}
+                                    className="sm:w-3.5 sm:h-3.5"
+                                  />
                                 </button>
                               )}
                               <ConfirmDialog
@@ -1524,7 +1859,10 @@ export default function TransactionsPage() {
                                     className="rounded-lg p-1 sm:p-1.5 hover:bg-red-50 text-red-600 transition-colors"
                                     title="Hapus transaksi"
                                   >
-                                    <Trash2 size={12} className="sm:w-3.5 sm:h-3.5" />
+                                    <Trash2
+                                      size={12}
+                                      className="sm:w-3.5 sm:h-3.5"
+                                    />
                                   </button>
                                 }
                               />
@@ -1546,17 +1884,19 @@ export default function TransactionsPage() {
                 </p>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className={`rounded-lg border border-blue-200 p-1.5 sm:p-2 ${
                       currentPage === 1
-                        ? 'cursor-not-allowed text-slate-400'
-                        : 'hover:bg-blue-50 text-slate-700'
+                        ? "cursor-not-allowed text-slate-400"
+                        : "hover:bg-blue-50 text-slate-700"
                     }`}
                   >
                     <ChevronLeft size={14} className="sm:w-4 sm:h-4" />
                   </button>
-                  
+
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) {
@@ -1568,29 +1908,31 @@ export default function TransactionsPage() {
                     } else {
                       pageNum = currentPage - 2 + i;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
                         className={`rounded-lg border px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm ${
                           currentPage === pageNum
-                            ? 'border-blue-500 bg-blue-50 text-blue-600 font-medium'
-                            : 'border-blue-200 hover:bg-blue-50 text-slate-700'
+                            ? "border-blue-500 bg-blue-50 text-blue-600 font-medium"
+                            : "border-blue-200 hover:bg-blue-50 text-slate-700"
                         }`}
                       >
                         {pageNum}
                       </button>
                     );
                   })}
-                  
+
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className={`rounded-lg border border-blue-200 p-1.5 sm:p-2 ${
                       currentPage === totalPages
-                        ? 'cursor-not-allowed text-slate-400'
-                        : 'hover:bg-blue-50 text-slate-700'
+                        ? "cursor-not-allowed text-slate-400"
+                        : "hover:bg-blue-50 text-slate-700"
                     }`}
                   >
                     <ChevronRight size={14} className="sm:w-4 sm:h-4" />
@@ -1604,23 +1946,36 @@ export default function TransactionsPage() {
 
       {/* QUICK TIPS - Responsive */}
       <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3 sm:p-5">
-        <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold text-blue-800">💡 Tips Mengelola Transaksi</h4>
+        <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-semibold text-blue-800">
+          💡 Tips Mengelola Transaksi
+        </h4>
         <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-blue-700">
           <li className="flex items-start gap-1.5 sm:gap-2">
             <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-            <span>Catat transaksi segera setelah terjadi untuk akurasi data.</span>
+            <span>
+              Catat transaksi segera setelah terjadi untuk akurasi data.
+            </span>
           </li>
           <li className="flex items-start gap-1.5 sm:gap-2">
             <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-            <span>Gunakan fitur transfer untuk memindahkan dana antar dompet dengan mudah.</span>
+            <span>
+              Gunakan fitur transfer untuk memindahkan dana antar dompet dengan
+              mudah.
+            </span>
           </li>
           <li className="flex items-start gap-1.5 sm:gap-2">
             <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-            <span>Export data ke Excel untuk analisis lebih lanjut atau backup berkala.</span>
+            <span>
+              Export data ke Excel untuk analisis lebih lanjut atau backup
+              berkala.
+            </span>
           </li>
           <li className="flex items-start gap-1.5 sm:gap-2">
             <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-            <span>Gunakan filter untuk melihat pola pengeluaran berdasarkan kategori atau periode.</span>
+            <span>
+              Gunakan filter untuk melihat pola pengeluaran berdasarkan kategori
+              atau periode.
+            </span>
           </li>
         </ul>
       </div>
