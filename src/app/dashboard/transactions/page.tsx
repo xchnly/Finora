@@ -1709,12 +1709,6 @@ export default function TransactionsPage() {
                                   year: "numeric",
                                 })}
                               </span>
-                              <span className="text-xs text-slate-500">
-                                {tx.date.toDate().toLocaleTimeString("id-ID", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
                             </div>
                           </td>
                           <td className="px-2 sm:px-4 py-2 sm:py-3">
